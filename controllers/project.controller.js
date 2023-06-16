@@ -1,50 +1,56 @@
-const db = require('../models')
 
 const multer = require('multer')
 const path = require('path')
+const moment = require('moment');
 
-const Project = db.project
+const db = require('../models')
+const Project = db.Project
 
 const addProject = async (req, res) => {
-
-    if (!req.body.title) {
+    
+    if (!req.body.name) {
         res.status(400).send({ message: "Content can not be empty!" });
         return;
     }
-
+    
+    console.log(req.body);
+    
     const data = {
-        image: req.file.path,
-        title: req.body.title,
+        name: req.body.name,
         description: req.body.description,
+        user_id: req.user.id,
+        image: req.file.path,
         category: req.body.category,
         status: req.body.status,
-        from_date: req.body.from_date,
-        to_date: req.body.to_date,
-        total_amount: req.body.total_amount
+        from_date: moment(req.body.from_date).format('YYYY-MM-DD'),
+        to_date: moment(req.body.to_date).format('YYYY-MM-DD'),
+        total_amount: req.body.total_amount,
+        rest_amount: req.body.rest_amount,
+        current_amount: req.body.current_amount,
     }
-
-    try {
-        const project = await Project.create(data)
+    
+    Project.create(data)
+    .then(project => {
         res.status(200).send(project)
-    } catch (error) {
+    }).catch(err => {
         res.status(500).send({
             message:
                 err.message || "Some error occurred while creating the Project."
         });
-    }
+    })
 }
 
 const getAllProjects = async (req, res) => {
 
-    try {
-        const projects = await Project.findAll({})
+    Project.findAll({})
+    .then(projects => {
         res.status(200).send(projects)
-    } catch (error) {
+    }).catch(err => {
         res.status(500).send({
             message:
                 err.message || "Some error occurred while fetching the Projects."
         });
-    }
+    })
 
 }
 

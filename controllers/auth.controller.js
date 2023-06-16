@@ -2,17 +2,19 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const db = require('../models')
 
-const User = db.user;
+const User = db.User;
 
 const signup = async (req, res) => {
 
     const data = {
-        user_name: req.body.user_name,
+        first_name: req.body.firstName,
+        last_name: req.body.lastName,
+        user_name: req.body.userName,
         email: req.body.email,
+        role_id: 10,
         password: bcrypt.hashSync(req.body.password, 8)
     };
 
-    console.log(data);
     try {
         const user = await User.create(data)
         res.status(200).send(user)
@@ -39,19 +41,18 @@ const signin = async (req, res) => {
                 });
         }
 
-        const token = jwt.sign({
-            id: user.id
-        }, process.env.JWT_SECRET, {
-            expiresIn: 86400
-        });
+        const token = jwt.sign(
+            {
+                id: user.id
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: 86400
+            });
 
         res.status(200)
             .send({
-                user: {
-                    id: user._id,
-                    email: user.email,
-                    fullName: user.fullName,
-                },
+                user: user,
                 message: "Login successfull",
                 accessToken: token,
             });
@@ -62,7 +63,28 @@ const signin = async (req, res) => {
     }
 };
 
+const authenticate = async (req, res, next) => {
+    try {
+        const token = await req.headers.authorization.split(" ")[1];
+
+        const decodedToken = await jwt.verify(token, process.env.JWT_SECRET);
+        
+        const user = await decodedToken;
+        
+        req.user = user;
+        
+        next();
+        
+    } catch (error) {
+        res.status(401).send({
+            message: "Invalid request! " + error
+        });
+    }
+};
+
+
 module.exports = {
     signup,
-    signin
+    signin,
+    authenticate
 }
