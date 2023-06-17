@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.TEXT,
     image: DataTypes.STRING,
     user_id: DataTypes.INTEGER,
-    category: DataTypes.INTEGER,
+    category_id: DataTypes.INTEGER,
     status: DataTypes.INTEGER,
     from_date: DataTypes.DATE,
     to_date: DataTypes.DATE,
@@ -16,6 +16,8 @@ module.exports = (sequelize, DataTypes) => {
 
   Project.associate = function(models) {
     Project.belongsTo(models.User, {foreignKey: 'user_id'})
+    Project.belongsTo(models.Category, {foreignKey: 'category_id'})
+    Project.hasMany(models.Contrubution, {foreignKey: 'project_id'})
   };
 
   return Project;

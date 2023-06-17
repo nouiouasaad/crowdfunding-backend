@@ -3,15 +3,18 @@ const bcrypt = require("bcryptjs");
 const db = require('../models')
 
 const User = db.User;
+const Role = db.Role;
 
 const signup = async (req, res) => {
+
+    let role = await Role.findOne({where: {name: 'Creator'}});
 
     const data = {
         first_name: req.body.firstName,
         last_name: req.body.lastName,
         user_name: req.body.userName,
         email: req.body.email,
-        role_id: 10,
+        role_id: role.id,
         password: bcrypt.hashSync(req.body.password, 8)
     };
 

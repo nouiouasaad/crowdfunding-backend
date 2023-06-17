@@ -1,5 +1,4 @@
-'use strict';
-/** @type {import('sequelize-cli').Migration} */
+
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('Projects', {
@@ -19,7 +18,7 @@ module.exports = {
       image: {
         type: Sequelize.STRING
       },
-      category: {
+      category_id: {
         type: Sequelize.INTEGER
       },
       user_id: {

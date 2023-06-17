@@ -2,61 +2,146 @@
 const multer = require('multer')
 const path = require('path')
 const moment = require('moment');
+const constant = require('../constants/Constants')
+const db = require('../models');
+const { log } = require('console');
 
-const db = require('../models')
 const Project = db.Project
+const Category = db.Category
+const User = db.User
+const Contrubution = db.Contrubution
 
-const addProject = async (req, res) => {
-    
+const addProject = (req, res) => {
+
     if (!req.body.name) {
         res.status(400).send({ message: "Content can not be empty!" });
         return;
     }
-    
-    console.log(req.body);
-    
+
     const data = {
         name: req.body.name,
         description: req.body.description,
         user_id: req.user.id,
-        image: req.file.path,
-        category: req.body.category,
-        status: req.body.status,
-        from_date: moment(req.body.from_date).format('YYYY-MM-DD'),
-        to_date: moment(req.body.to_date).format('YYYY-MM-DD'),
-        total_amount: req.body.total_amount,
-        rest_amount: req.body.rest_amount,
-        current_amount: req.body.current_amount,
+        image: req.file.filename,
+        category_id: req.body.categoryId,
+        status: req.body.status ?? constant.status.pending,
+        from_date: moment(req.body.startDate.startDate).format('YYYY-MM-DD'),
+        to_date: moment(req.body.endDate.endDate).format('YYYY-MM-DD'),
+        total_amount: req.body.amount,
+        rest_amount: 0,
+        current_amount: 0,
     }
-    
+
     Project.create(data)
-    .then(project => {
-        res.status(200).send(project)
-    }).catch(err => {
-        res.status(500).send({
-            message:
-                err.message || "Some error occurred while creating the Project."
-        });
-    })
+        .then(project => {
+            res.status(200).send(project)
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while creating the Project."
+            });
+        })
 }
 
-const getAllProjects = async (req, res) => {
+const invest = (req, res) => {
 
-    Project.findAll({})
-    .then(projects => {
-        res.status(200).send(projects)
-    }).catch(err => {
-        res.status(500).send({
-            message:
-                err.message || "Some error occurred while fetching the Projects."
-        });
-    })
+    const id = req.params.id;
+
+    if (!id) {
+        res.status(400).send({ message: "Content can not be empty!" });
+        return;
+    }
+
+    const data = {
+        project_id: id,
+        first_name: req.body.firstName,
+        last_name: req.body.lastName,
+        email: req.body.email,
+        phone_number: req.body.phoneNumber,
+        contrubution: req.body.contrubution,
+        name_on_card: req.body.nameOnCard,
+        exp_date: moment(req.body.expDate.expDate).format('YYYY-MM-DD'),
+        card_number: req.body.cardNumber,
+        security_number: req.body.securityNumber,
+    }
+
+    Contrubution.create(data)
+        .then(contrubution => {
+            updateProjectAmount(id, req.body.contrubution)
+            res.status(200).send(contrubution)
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while creating the Project."
+            });
+        })
+}
+
+const getAllProjects = (req, res) => {
+
+    Project.findAll({ include: [{ model: Category }] })
+        .then(projects => {
+            console.log(projects);
+            res.status(200).send(projects)
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while fetching the Projects."
+            });
+        })
+
+}
+
+const getProjectById = (req, res) => {
+
+    const id = req.params.id;
+
+    Project.findOne(
+        {
+            where: { id: id },
+            include: [{ model: Category }, { model: User }],
+        }
+    )
+        .then(project => {
+            res.status(200).send(project)
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while fetching the Projects."
+            });
+        })
+
+}
+
+const updateProjectAmount = (id, amount) => {
+
+    Project.findOne(
+        {
+            where: { id: id },
+        }
+    )
+        .then(project => {
+            if (project) {
+                project.current_amount = project.current_amount + parseFloat(amount)
+                project.rest_amount = project.total_amount - project.current_amount
+
+                project.save()
+                    .then(project => {
+                        
+                    })
+                    .catch(err => {
+                        
+                    })
+            }
+        }).catch(err => {
+            
+        })
 
 }
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'Images')
+        cb(null, 'images')
     },
     filename: (req, file, cb) => {
         let ext = path.extname(file.originalname)
@@ -69,18 +154,20 @@ const upload = multer({
     limits: { fileSize: '1000000' },
     fileFilter: (req, file, cb) => {
         const fileTypes = /jpeg|jpg|png|gif/
-        const mimeType = fileTypes.test(file.mimetype)  
+        const mimeType = fileTypes.test(file.mimetype)
         const extname = fileTypes.test(path.extname(file.originalname))
 
-        if(mimeType && extname) {
+        if (mimeType && extname) {
             return cb(null, true)
         }
         cb('Give proper files formate to upload')
     }
-}).single('image')
+}).single('file')
 
 module.exports = {
     addProject,
     getAllProjects,
+    getProjectById,
+    invest,
     upload
 }
