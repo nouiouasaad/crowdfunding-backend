@@ -4,7 +4,6 @@ const path = require('path')
 const moment = require('moment');
 const constant = require('../constants/Constants')
 const db = require('../models');
-const { log } = require('console');
 
 const Project = db.Project
 const Category = db.Category
@@ -77,11 +76,24 @@ const invest = (req, res) => {
         })
 }
 
+const getAllContrubutions = (req, res) => {
+
+    Contrubution.findAll({ include: { all: true } })
+        .then(contrubutions => {
+            res.status(200).send(contrubutions)
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while fetching the Projects."
+            });
+        })
+
+}
+
 const getAllProjects = (req, res) => {
 
-    Project.findAll({ include: [{ model: Category }] })
+    Project.findAll({ include: { all: true } })
         .then(projects => {
-            console.log(projects);
             res.status(200).send(projects)
         }).catch(err => {
             res.status(500).send({
@@ -127,14 +139,14 @@ const updateProjectAmount = (id, amount) => {
 
                 project.save()
                     .then(project => {
-                        
+
                     })
                     .catch(err => {
-                        
+
                     })
             }
         }).catch(err => {
-            
+
         })
 
 }
@@ -169,5 +181,6 @@ module.exports = {
     getAllProjects,
     getProjectById,
     invest,
-    upload
+    upload,
+    getAllContrubutions
 }

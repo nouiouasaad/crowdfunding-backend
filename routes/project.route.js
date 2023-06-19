@@ -7,6 +7,7 @@ const router = express()
 router.post('/create', auth.authenticate, project.upload, project.addProject)
 router.post('/invest/:id', project.invest)
 router.get('/', project.getAllProjects)
+router.get('/contrubution', project.getAllContrubutions)
 router.get('/:id', project.getProjectById)
 
 module.exports = router

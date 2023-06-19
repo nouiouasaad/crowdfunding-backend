@@ -1,13 +1,14 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const db = require('../models')
+const { createProfile } = require('../controllers/user.controller')
 
 const User = db.User;
 const Role = db.Role;
 
 const signup = async (req, res) => {
 
-    let role = await Role.findOne({where: {name: 'Creator'}});
+    let role = await Role.findOne({ where: { name: 'Creator' } });
 
     const data = {
         first_name: req.body.firstName,
@@ -20,18 +21,17 @@ const signup = async (req, res) => {
 
     try {
         const user = await User.create(data)
-        res.status(200).send(user)
+        createProfile(user.id)
+        signin(req, res)
     } catch (error) {
-        res.status(500).send({
-            message:
-                err.message || "Some error occurred while creating the User."
-        });
+
     }
+
 };
 
 const signin = async (req, res) => {
     try {
-        const user = await User.findOne({ where: { email: req.body.email } });
+        const user = await User.findOne({ where: { email: req.body.email }, include: { all: true } });
 
         if (!user)
             res.status(404).send({ message: "Not found user with email " + req.body.email });
@@ -71,13 +71,13 @@ const authenticate = async (req, res, next) => {
         const token = await req.headers.authorization.split(" ")[1];
 
         const decodedToken = await jwt.verify(token, process.env.JWT_SECRET);
-        
+
         const user = await decodedToken;
-        
+
         req.user = user;
-        
+
         next();
-        
+
     } catch (error) {
         res.status(401).send({
             message: "Invalid request! " + error
