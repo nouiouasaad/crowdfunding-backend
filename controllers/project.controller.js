@@ -1,5 +1,6 @@
 
 const moment = require('moment');
+const { Op } = require("sequelize");
 const constant = require('../constants/Constants')
 const db = require('../models');
 
@@ -124,7 +125,12 @@ const getAllProjects = (req, res) => {
 const getApprovedProjects = (req, res) => {
 
     Project.findAll({
-        where: { status: !constant.status.pending || !constant.status.canceled },
+        where: {
+            [Op.or]: [
+                { status: constant.status.Completed },
+                { status: constant.status.approved }
+            ]
+        },
         include: { all: true }
     })
         .then(projects => {
@@ -162,7 +168,7 @@ const getProjectById = (req, res) => {
     Project.findOne(
         {
             where: { id: id },
-            include: [{ model: Category }, { model: User }],
+            include: { all: true },
         }
     )
         .then(project => {
