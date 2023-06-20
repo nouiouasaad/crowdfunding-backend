@@ -1,10 +1,11 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const db = require('../models')
-const { createProfile } = require('../controllers/user.controller')
+const { createProfile } = require('../controllers/user.controller');
 
 const User = db.User;
 const Role = db.Role;
+const UserProfile = db.UserProfile;
 
 const signup = async (req, res) => {
 
@@ -32,6 +33,7 @@ const signup = async (req, res) => {
 const signin = async (req, res) => {
     try {
         const user = await User.findOne({ where: { email: req.body.email }, include: { all: true } });
+        const userProfile = await UserProfile.findOne({ where: { user_id: user.id }, include: { all: true } });
 
         if (!user)
             res.status(404).send({ message: "Not found user with email " + req.body.email });
@@ -56,6 +58,7 @@ const signin = async (req, res) => {
         res.status(200)
             .send({
                 user: user,
+                userProfile: userProfile,
                 message: "Login successfull",
                 accessToken: token,
             });

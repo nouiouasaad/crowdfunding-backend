@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
 
   UserProfile.associate = function(models) {
+    UserProfile.belongsTo(models.User, {foreignKey: 'id'}, { onDelete: 'CASCADE' })
   };
 
   return UserProfile;

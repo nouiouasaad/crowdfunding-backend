@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
 
   Contrubution.associate = function(models) {
-    Contrubution.belongsTo(models.Project, {foreignKey: 'project_id'})
+    Contrubution.belongsTo(models.Project, {foreignKey: 'project_id'}, { onDelete: 'CASCADE' })
   };
 
   return Contrubution;

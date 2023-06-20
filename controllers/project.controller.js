@@ -1,6 +1,4 @@
 
-const multer = require('multer')
-const path = require('path')
 const moment = require('moment');
 const constant = require('../constants/Constants')
 const db = require('../models');
@@ -90,9 +88,62 @@ const getAllContrubutions = (req, res) => {
 
 }
 
+const getContrubutionsByProjectId = (req, res) => {
+
+    Contrubution.findAll({
+        where: { project_id: req.params.id },
+        include: { all: true }
+    })
+        .then(contrubutions => {
+            res.status(200).send(contrubutions)
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while fetching the Projects."
+            });
+        })
+
+}
+
 const getAllProjects = (req, res) => {
 
-    Project.findAll({ include: { all: true } })
+    Project.findAll({
+        include: { all: true }
+    })
+        .then(projects => {
+            res.status(200).send(projects)
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while fetching the Projects."
+            });
+        })
+
+}
+
+const getApprovedProjects = (req, res) => {
+
+    Project.findAll({
+        where: { status: !constant.status.pending || !constant.status.canceled },
+        include: { all: true }
+    })
+        .then(projects => {
+            res.status(200).send(projects)
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while fetching the Projects."
+            });
+        })
+
+}
+
+const getProjectsByUserId = (req, res) => {
+
+    Project.findAll({
+        where: { user_id: req.params.userId },
+        include: { all: true }
+    })
         .then(projects => {
             res.status(200).send(projects)
         }).catch(err => {
@@ -116,6 +167,26 @@ const getProjectById = (req, res) => {
     )
         .then(project => {
             res.status(200).send(project)
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while fetching the Projects."
+            });
+        })
+
+}
+
+const deleteProjectById = (req, res) => {
+
+    const id = req.params.id;
+
+    Project.destroy(
+        {
+            where: { id: id },
+        }
+    )
+        .then(() => {
+            res.status(200).send(id)
         }).catch(err => {
             res.status(500).send({
                 message:
@@ -151,36 +222,121 @@ const updateProjectAmount = (id, amount) => {
 
 }
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'images')
-    },
-    filename: (req, file, cb) => {
-        let ext = path.extname(file.originalname)
-        cb(null, Date.now() + ext)
-    }
-})
+const approveProject = (req, res) => {
 
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: '1000000' },
-    fileFilter: (req, file, cb) => {
-        const fileTypes = /jpeg|jpg|png|gif/
-        const mimeType = fileTypes.test(file.mimetype)
-        const extname = fileTypes.test(path.extname(file.originalname))
+    const id = req.params.id;
 
-        if (mimeType && extname) {
-            return cb(null, true)
+    Project.findOne(
+        {
+            where: { id: id },
         }
-        cb('Give proper files formate to upload')
-    }
-}).single('file')
+    )
+        .then(project => {
+            if (project) {
+                project.status = constant.status.approved
+
+                project.save()
+                    .then(project => {
+                        res.status(200).send(project)
+                    })
+                    .catch(err => {
+                        res.status(500).send({
+                            message:
+                                err.message || "Some error occurred while fetching the Projects."
+                        });
+                    })
+            }
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while fetching the Projects."
+            });
+        })
+
+}
+
+const cancelProject = (req, res) => {
+
+    const id = req.params.id;
+
+    Project.findOne(
+        {
+            where: { id: id },
+        }
+    )
+        .then(project => {
+            if (project) {
+                project.status = constant.status.canceled
+
+                project.save()
+                    .then(project => {
+                        res.status(200).send(project)
+                    })
+                    .catch(err => {
+                        res.status(500).send({
+                            message:
+                                err.message || "Some error occurred while fetching the Projects."
+                        });
+                    })
+            }
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while fetching the Projects."
+            });
+        })
+
+}
+
+const getProjectsByCategoryId = (req, res) => {
+
+    const id = req.params.id;
+
+    Project.findAll({
+        where: { category_id: id },
+        include: { all: true }
+    })
+        .then(projects => {
+            res.status(200).send(projects)
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while fetching the Projects."
+            });
+        })
+
+}
+
+const getAllCategories = (req, res) => {
+
+    const id = req.params.id;
+
+    Category.findAll({
+        include: { all: true }
+    })
+        .then(categories => {
+            res.status(200).send(categories)
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while fetching the Projects."
+            });
+        })
+
+}
 
 module.exports = {
     addProject,
     getAllProjects,
     getProjectById,
     invest,
-    upload,
-    getAllContrubutions
+    getAllContrubutions,
+    approveProject,
+    cancelProject,
+    deleteProjectById,
+    getContrubutionsByProjectId,
+    getApprovedProjects,
+    getProjectsByUserId,
+    getProjectsByCategoryId,
+    getAllCategories
 }

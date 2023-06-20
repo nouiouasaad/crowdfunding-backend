@@ -15,8 +15,8 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
 
   Project.associate = function(models) {
-    Project.belongsTo(models.User, {foreignKey: 'user_id'})
-    Project.belongsTo(models.Category, {foreignKey: 'category_id'})
+    Project.belongsTo(models.User, {foreignKey: 'user_id'}, { onDelete: 'CASCADE' })
+    Project.belongsTo(models.Category, {foreignKey: 'category_id'}, { onDelete: 'CASCADE' })
     Project.hasMany(models.Contrubution, {foreignKey: 'project_id'})
   };
 
